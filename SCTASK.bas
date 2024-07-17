@@ -1,4 +1,3 @@
-Attribute VB_Name = "Module1"
 Sub CreateTechTabs_SCTASK()
     Dim ws As Worksheet
     Dim techCell As Range
@@ -11,6 +10,8 @@ Sub CreateTechTabs_SCTASK()
     Dim ticketNumber As String
     Dim closedDate As String
     Dim currentDate As String
+    Dim sheetName As String
+    Dim counter As Integer
     
     ' Prompt user to select the SCTASK file
     sctaskFilePath = Application.GetOpenFilename("Excel Files (*.xlsx), *.xlsx", , "Select SCTASK File")
@@ -43,9 +44,17 @@ Sub CreateTechTabs_SCTASK()
     
     ' Loop through the unique technicians and create a new sheet for each
     For Each techKey In techDict.Keys
+        ' Generate a unique sheet name
+        sheetName = techKey
+        counter = 1
+        Do While SheetExists(sheetName)
+            sheetName = techKey & "_" & counter
+            counter = counter + 1
+        Loop
+        
         ' Add a new sheet
         Set newSheet = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-        newSheet.Name = techKey
+        newSheet.Name = sheetName
         
         ' Copy the template to the new sheet
         templateSheet.UsedRange.Copy Destination:=newSheet.Range("A1")
@@ -54,8 +63,8 @@ Sub CreateTechTabs_SCTASK()
         For Each techCell In techCol
             If techCell.Value = techKey Then
                 ' Get the required values
-                ticketNumber = techCell.Offset(0, -3).Value ' Ticket Number
-                closedDate = techCell.Offset(0, 3).Value ' Closed Date
+                ticketNumber = techCell.Offset(0, -3).Value ' Ticket Number (column A)
+                closedDate = techCell.Offset(0, 3).Value ' Closed Date (column G)
                 currentDate = Format(Date, "yyyy-mm-dd") ' Current Date
                 
                 ' Fill the cells in the new sheet
@@ -81,3 +90,14 @@ Sub CreateTechTabs_SCTASK()
     MsgBox "Tabs created for each technician!"
 End Sub
 
+' Function to check if a sheet with the given name already exists
+Function SheetExists(sheetName As String) As Boolean
+    Dim sheet As Worksheet
+    SheetExists = False
+    For Each sheet In ThisWorkbook.Sheets
+        If sheet.Name = sheetName Then
+            SheetExists = True
+            Exit Function
+        End If
+    Next sheet
+End Function
