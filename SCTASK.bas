@@ -35,7 +35,7 @@ Sub CreateTechTabs_SCTASK()
     
     ' Loop through the technician column to find unique names
     For Each techCell In techCol
-        If Not techDict.exists(techCell.Value) Then
+        If Not techDict.exists(techCell.Value) And techCell.Value <> "" Then
             techDict.Add techCell.Value, 1
         End If
     Next techCell
@@ -79,4 +79,3 @@ Sub CreateTechTabs_SCTASK()
     
     MsgBox "Tabs created for each technician!"
 End Sub
-
