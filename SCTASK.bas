@@ -44,44 +44,46 @@ Sub CreateTechTabs_SCTASK()
     
     ' Loop through the unique technicians and create a new sheet for each
     For Each techKey In techDict.Keys
-        ' Generate a unique sheet name
-        sheetName = techKey
+        ' Generate a unique and valid sheet name
+        sheetName = GetValidSheetName(techKey)
         counter = 1
         Do While SheetExists(sheetName)
-            sheetName = techKey & "_" & counter
+            sheetName = GetValidSheetName(techKey & "_" & counter)
             counter = counter + 1
         Loop
         
-        ' Add a new sheet
-        Set newSheet = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-        newSheet.Name = sheetName
-        
-        ' Copy the template to the new sheet
-        templateSheet.UsedRange.Copy Destination:=newSheet.Range("A1")
-        
-        ' Loop through the ticket column to find the ticket for the technician
-        For Each techCell In techCol
-            If techCell.Value = techKey Then
-                ' Get the required values
-                ticketNumber = techCell.Offset(0, -3).Value ' Ticket Number (column A)
-                closedDate = techCell.Offset(0, 3).Value ' Closed Date (column G)
-                currentDate = Format(Date, "yyyy-mm-dd") ' Current Date
-                
-                ' Fill the cells in the new sheet
-                With newSheet
-                    .Cells(2, 3).Value = ticketNumber ' C2
-                    .Cells(3, 3).Value = techKey ' C3
-                    .Cells(4, 3).Value = techKey ' C4
-                    .Cells(3, 5).Value = closedDate ' E3
-                    .Cells(4, 5).Value = currentDate ' E4
-                End With
-                
-                Exit For ' Only fill the first ticket for the technician
-            End If
-        Next techCell
-        
-        ' Autofit columns to prevent text cutoff
-        newSheet.Columns("A:F").AutoFit
+        ' Add a new sheet only if it doesn't already exist
+        If Not SheetExists(sheetName) Then
+            Set newSheet = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+            newSheet.Name = sheetName
+            
+            ' Copy the template to the new sheet
+            templateSheet.UsedRange.Copy Destination:=newSheet.Range("A1")
+            
+            ' Loop through the ticket column to find the ticket for the technician
+            For Each techCell In techCol
+                If techCell.Value = techKey Then
+                    ' Get the required values
+                    ticketNumber = techCell.Offset(0, -3).Value ' Ticket Number (column A)
+                    closedDate = techCell.Offset(0, 3).Value ' Closed Date (column G)
+                    currentDate = Format(Date, "yyyy-mm-dd") ' Current Date
+                    
+                    ' Fill the cells in the new sheet
+                    With newSheet
+                        .Cells(2, 3).Value = ticketNumber ' C2
+                        .Cells(3, 3).Value = techKey ' C3
+                        .Cells(4, 3).Value = techKey ' C4
+                        .Cells(3, 5).Value = closedDate ' E3
+                        .Cells(4, 5).Value = currentDate ' E4
+                    End With
+                    
+                    Exit For ' Only fill the first ticket for the technician
+                End If
+            Next techCell
+            
+            ' Autofit columns to prevent text cutoff
+            newSheet.Columns("A:F").AutoFit
+        End If
     Next techKey
     
     ' Close the SCTASK workbook
@@ -100,4 +102,22 @@ Function SheetExists(sheetName As String) As Boolean
             Exit Function
         End If
     Next sheet
+End Function
+
+' Function to generate a valid sheet name
+Function GetValidSheetName(name As String) As String
+    Dim invalidChars As Variant
+    Dim char As Variant
+    
+    invalidChars = Array("/", "\", "[", "]", "*", "?", ":", Chr(34)) ' Chr(34) is the double quote character
+    
+    For Each char In invalidChars
+        name = Replace(name, char, "")
+    Next char
+    
+    If Len(name) > 31 Then
+        name = Left(name, 31)
+    End If
+    
+    GetValidSheetName = name
 End Function
